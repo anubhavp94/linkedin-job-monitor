@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Job Monitor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>LinkedIn Job Monitor</h1>
+    <div class="form-group">
+      <label for="jobUrl">LinkedIn Job Search URL:</label>
+      <input
+        type="text"
+        id="jobUrl"
+        placeholder="https://www.linkedin.com/jobs/search/..."
+        class="url-input"
+      >
+    </div>
+    <button id="saveBtn" class="save-btn">Save URL</button>
+    <button id="checkNowBtn" class="check-now-btn">Check Now</button>
+    <div id="status" class="status"></div>
+    <div class="info">
+      <p>The extension will check for new jobs every hour.</p>
+      <p id="currentUrl" class="current-url"></p>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
