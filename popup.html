@@ -21,6 +21,30 @@
     <button id="saveBtn" class="save-btn">Save URL</button>
     <button id="checkNowBtn" class="check-now-btn">Check Now</button>
     <div id="status" class="status"></div>
+
+    <div class="telegram-section">
+      <h2>Telegram Notifications</h2>
+      <div class="form-group">
+        <label for="telegramBotToken">Bot Token:</label>
+        <input
+          type="password"
+          id="telegramBotToken"
+          placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+          class="url-input"
+        >
+      </div>
+      <div class="form-group">
+        <label for="telegramChatId">Chat ID:</label>
+        <input
+          type="text"
+          id="telegramChatId"
+          placeholder="123456789"
+          class="url-input"
+        >
+      </div>
+      <button id="saveTelegramBtn" class="save-btn">Save Telegram Settings</button>
+      <div id="telegramStatus" class="status"></div>
+    </div>
     <div class="info">
       <p>The extension will check for new jobs every hour.</p>
       <p id="currentUrl" class="current-url"></p>

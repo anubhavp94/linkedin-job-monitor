@@ -41,6 +41,38 @@ chrome.notifications.onClicked.addListener(async (notificationId) => {
   chrome.notifications.clear(notificationId);
 });
 
+// Send notification to Telegram
+async function sendTelegramNotification(botToken, chatId, message) {
+  try {
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'HTML',
+        disable_web_page_preview: false
+      })
+    });
+
+    const result = await response.json();
+
+    if (!result.ok) {
+      console.error('Telegram API error:', result);
+      return false;
+    }
+
+    console.log('Telegram notification sent successfully');
+    return true;
+  } catch (error) {
+    console.error('Error sending Telegram notification:', error);
+    return false;
+  }
+}
+
 // Create a simple icon data URL
 function createIconDataUrl() {
   const canvas = new OffscreenCanvas(48, 48);
@@ -63,7 +95,7 @@ function createIconDataUrl() {
 
 async function checkForNewJobs() {
   try {
-    const data = await chrome.storage.local.get(['monitorUrl', 'seenJobs', 'seenJobIds']);
+    const data = await chrome.storage.local.get(['monitorUrl', 'seenJobs', 'seenJobIds', 'telegramBotToken', 'telegramChatId']);
 
     if (!data.monitorUrl) {
       console.log('No URL configured for monitoring');
@@ -140,6 +172,51 @@ async function checkForNewJobs() {
           });
 
           console.log(`Found ${newJobs.length} new jobs`);
+
+          // Send Telegram notification if configured
+          if (data.telegramBotToken && data.telegramChatId) {
+            const TELEGRAM_MAX_LENGTH = 4096;
+            let telegramMessage = `🔔 <b>New LinkedIn Jobs Found!</b> (${newJobs.length})\n\n`;
+
+            // Show ALL jobs in Telegram (no limit)
+            newJobs.forEach((job, index) => {
+              telegramMessage += `${index + 1}. <b>${job.title}</b>\n`;
+              telegramMessage += `   <i>${job.company}</i>\n`;
+              telegramMessage += `   <a href="${job.url}">View Job</a>\n\n`;
+            });
+
+            telegramMessage += `\n<a href="${data.monitorUrl}">View all jobs on LinkedIn</a>`;
+
+            // If message is too long, split into multiple messages
+            if (telegramMessage.length > TELEGRAM_MAX_LENGTH) {
+              const footer = `\n\n<a href="${data.monitorUrl}">View all jobs on LinkedIn</a>`;
+              let currentMessage = `🔔 <b>New LinkedIn Jobs Found!</b> (${newJobs.length})\n\n`;
+              let messageCount = 1;
+
+              for (let i = 0; i < newJobs.length; i++) {
+                const job = newJobs[i];
+                const jobText = `${i + 1}. <b>${job.title}</b>\n   <i>${job.company}</i>\n   <a href="${job.url}">View Job</a>\n\n`;
+
+                // Check if adding this job would exceed the limit
+                if ((currentMessage + jobText + footer).length > TELEGRAM_MAX_LENGTH) {
+                  // Send current message
+                  await sendTelegramNotification(data.telegramBotToken, data.telegramChatId, currentMessage + footer);
+                  messageCount++;
+                  // Start new message
+                  currentMessage = `🔔 <b>New LinkedIn Jobs (continued ${messageCount})</b>\n\n` + jobText;
+                } else {
+                  currentMessage += jobText;
+                }
+              }
+
+              // Send remaining jobs
+              if (currentMessage.length > 0) {
+                await sendTelegramNotification(data.telegramBotToken, data.telegramChatId, currentMessage + footer);
+              }
+            } else {
+              await sendTelegramNotification(data.telegramBotToken, data.telegramChatId, telegramMessage);
+            }
+          }
         } else {
           console.log('No new jobs found');
           // Send notification even when no new jobs (for testing/confirmation)

@@ -5,11 +5,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   const statusDiv = document.getElementById('status');
   const currentUrlP = document.getElementById('currentUrl');
 
+  // Telegram elements
+  const telegramBotTokenInput = document.getElementById('telegramBotToken');
+  const telegramChatIdInput = document.getElementById('telegramChatId');
+  const saveTelegramBtn = document.getElementById('saveTelegramBtn');
+  const telegramStatusDiv = document.getElementById('telegramStatus');
+
   // Load saved URL
-  const data = await chrome.storage.local.get(['monitorUrl']);
+  const data = await chrome.storage.local.get(['monitorUrl', 'telegramBotToken', 'telegramChatId']);
   if (data.monitorUrl) {
     jobUrlInput.value = data.monitorUrl;
     currentUrlP.textContent = `Currently monitoring: ${data.monitorUrl}`;
+  }
+
+  // Load saved Telegram settings
+  if (data.telegramBotToken) {
+    telegramBotTokenInput.value = data.telegramBotToken;
+  }
+  if (data.telegramChatId) {
+    telegramChatIdInput.value = data.telegramChatId;
   }
 
   // Check Now button handler
@@ -69,12 +83,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Save Telegram settings
+  saveTelegramBtn.addEventListener('click', async () => {
+    const botToken = telegramBotTokenInput.value.trim();
+    const chatId = telegramChatIdInput.value.trim();
+
+    if (!botToken || !chatId) {
+      showTelegramStatus('Please enter both Bot Token and Chat ID', 'error');
+      return;
+    }
+
+    try {
+      await chrome.storage.local.set({
+        telegramBotToken: botToken,
+        telegramChatId: chatId
+      });
+
+      showTelegramStatus('Telegram settings saved successfully!', 'success');
+    } catch (error) {
+      showTelegramStatus('Error saving Telegram settings: ' + error.message, 'error');
+    }
+  });
+
   function showStatus(message, type) {
     statusDiv.textContent = message;
     statusDiv.className = `status ${type}`;
     setTimeout(() => {
       statusDiv.textContent = '';
       statusDiv.className = 'status';
+    }, 3000);
+  }
+
+  function showTelegramStatus(message, type) {
+    telegramStatusDiv.textContent = message;
+    telegramStatusDiv.className = `status ${type}`;
+    setTimeout(() => {
+      telegramStatusDiv.textContent = '';
+      telegramStatusDiv.className = 'status';
     }, 3000);
   }
 });
